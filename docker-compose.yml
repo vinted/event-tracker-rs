@@ -1,0 +1,8 @@
+version: '3.3'
+services:
+  udp-listener:
+    ports:
+      - '0.0.0.0:5005:5005'
+      - '0.0.0.0:5005:5005/udp'
+    container_name: udp-listener
+    image: mendhak/udp-listener
