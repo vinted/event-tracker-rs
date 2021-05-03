@@ -1,0 +1,18 @@
+[package]
+name = "event_tracker"
+version = "0.1.0"
+authors = ["Evaldas Buinauskas <evaldas.buinauskas@vinted.com>"]
+edition = "2018"
+
+[dependencies]
+bytes = "1"
+futures-channel = "0.3"
+futures-util = { version = "0.3", features = ["sink"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tokio = { version = "1", default-features = false, features = ["rt", "time"] }
+tokio-util = { version = "0.6", features = ["codec", "net"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["full"] }
