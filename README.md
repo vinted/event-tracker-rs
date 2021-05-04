@@ -7,7 +7,7 @@ A Rust port of [vinted/event-tracker](https://github.com/vinted/event-tracker)
 Add this line to your application's `Cargo.toml`:
 
 ```toml
-event_tracker = { git = "https://github.com/vinted/event-tracker-rs" }
+vinted_event_tracker = { git = "https://github.com/vinted/event-tracker-rs" }
 ```
 
 ## Usage
@@ -41,9 +41,7 @@ let event = vinted_event_tracker::Event::new("event", "portal", search_event);
 let _ = vinted_event_tracker::track(event);
 ```
 
-Tracker implementations
+Tracker implementations:
 
-```rust
-vinted_event_tracker::relay::Noop
-vinted_event_tracker::relay::Udp
-```
+- `vinted_event_tracker::relay::Noop`
+- `vinted_event_tracker::relay::Udp`
