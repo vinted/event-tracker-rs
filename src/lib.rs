@@ -2,7 +2,7 @@
 //!
 //! In your application executable:
 //! ```
-//! use event_tracker::*;
+//! use vinted_event_tracker::*;
 //! use serde::Serialize;
 //!
 //! #[tokio::main]
@@ -23,7 +23,7 @@
 //!     }
 //!
 //!     for iteration in 1..iterations {
-//!         let event = Event::new("event", "FR", SearchEvent { iteration });
+//!         let event = Event::new("event", "portal", SearchEvent { iteration });
 //!
 //!         let _ = track(event);
 //!     }
@@ -31,8 +31,8 @@
 //! ```
 //! In your library code, create an event structure and use it for tracking
 //! ```
-//! # use event_tracker::*;
-//! # use event_tracker::relay::*;
+//! # use vinted_event_tracker::*;
+//! # use vinted_event_tracker::relay::*;
 //! # use serde::Serialize;
 //! #[derive(Debug, Serialize)]
 //! struct SearchEvent {
@@ -47,9 +47,9 @@
 //!     query: "shoes".to_string(),
 //! };
 //!
-//! let event = Event::new("event", "FR", search_event);
+//! let event = Event::new("event", "portal", search_event);
 //!
-//! let _ = event_tracker::track(event);
+//! let _ = vinted_event_tracker::track(event);
 //! ```
 #![deny(
     warnings,

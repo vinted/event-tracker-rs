@@ -16,8 +16,8 @@ Configure the crate in your application executable, e.g. `src/main.rs` or `src/b
 
 ```rust
 let addr = "0.0.0.0:5005".parse().expect("valid addr");
-let udp_relay = event_tracker::relay::Udp::new(addr);
-let _ = event_tracker::set_relay(udp_relay);
+let udp_relay = vinted_event_tracker::relay::Udp::new(addr);
+let _ = vinted_event_tracker::set_relay(udp_relay);
 ```
 
 In your library code, create an event structure and use it for tracking
@@ -36,14 +36,14 @@ let search_event = SearchEvent {
     query: "shoes".to_string(),
 };
 
-let event = event_tracker::Event::new("event", "FR", search_event);
+let event = vinted_event_tracker::Event::new("event", "portal", search_event);
 
-let _ = event_tracker::track(event);
+let _ = vinted_event_tracker::track(event);
 ```
 
 Tracker implementations
 
 ```rust
-event_tracker::relay::Noop
-event_tracker::relay::Udp
+vinted_event_tracker::relay::Noop
+vinted_event_tracker::relay::Udp
 ```
