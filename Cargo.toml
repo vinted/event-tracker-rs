@@ -1,5 +1,5 @@
 [package]
-name = "event_tracker"
+name = "vinted_event_tracker"
 version = "0.1.0"
 authors = ["Evaldas Buinauskas <evaldas.buinauskas@vinted.com>"]
 edition = "2018"

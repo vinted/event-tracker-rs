@@ -1,5 +1,5 @@
-use event_tracker::*;
 use serde::Serialize;
+use vinted_event_tracker::*;
 
 #[tokio::main]
 async fn main() {
@@ -19,7 +19,7 @@ fn track_events(iterations: i32) {
     }
 
     for iteration in 1..iterations {
-        let event = Event::new("event", "FR", SearchEvent { iteration });
+        let event = Event::new("event", "portal", SearchEvent { iteration });
 
         let _ = track(event);
     }
