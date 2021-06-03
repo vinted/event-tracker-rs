@@ -166,9 +166,9 @@ where
     T: std::fmt::Debug + serde::Serialize,
 {
     match serde_json::to_vec(&event) {
-        Ok(buf) => relay().transport(bytes::Bytes::from(buf)),
+        Ok(buf) => relay().transport(event.base, bytes::Bytes::from(buf)),
         Err(error) => {
-            error!(error=%error, "Couldn't serialize event");
+            error!(%error, "Couldn't serialize event");
 
             Err(error.into())
         }

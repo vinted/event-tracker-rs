@@ -1,8 +1,10 @@
 //! [`Relay`] is an abstraction on where events will be sent to
 
+mod http;
 mod noop;
 mod udp;
 
+pub use self::http::*;
 pub use self::noop::*;
 pub use self::udp::*;
 
@@ -12,5 +14,5 @@ pub trait Relay {
     /// - HTTP
     /// - TCP
     /// - UDP
-    fn transport(&self, event: bytes::Bytes) -> crate::Result<()>;
+    fn transport(&self, event_base: crate::EventBase, event: bytes::Bytes) -> crate::Result<()>;
 }

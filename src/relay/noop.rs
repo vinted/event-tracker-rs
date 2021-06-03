@@ -1,6 +1,7 @@
 use super::Relay;
+use crate::EventBase;
 
-/// A [`Relay`] that will print events to standard output
+/// A [`Relay`] that won't do anything with events
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Noop;
 
@@ -12,9 +13,7 @@ impl Noop {
 }
 
 impl Relay for Noop {
-    fn transport(&self, event: bytes::Bytes) -> crate::Result<()> {
-        println!("event: {:?}", event);
-
+    fn transport(&self, _event_base: EventBase, _event: bytes::Bytes) -> crate::Result<()> {
         Ok(())
     }
 }
