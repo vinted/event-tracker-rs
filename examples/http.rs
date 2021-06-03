@@ -1,4 +1,6 @@
 use serde::Serialize;
+use std::time::Duration;
+use tokio::time::sleep;
 use tracing::Level;
 use vinted_event_tracker::*;
 
@@ -8,15 +10,18 @@ async fn main() {
         .with_max_level(Level::DEBUG)
         .finish();
 
-    let addr = "0.0.0.0:5005".parse().expect("valid addr");
+    let url = "http://0.0.0.0:8888".parse().expect("valid addr");
 
-    let udp_relay = Udp::new(addr);
+    let http_relay = Http::new(url);
 
-    if let Err(ref error) = set_relay(udp_relay) {
-        tracing::error!(%error, "Couldn't set UDP relay");
+    if let Err(ref error) = set_relay(http_relay) {
+        tracing::error!(%error, "Couldn't set HTTP relay");
     }
 
-    track_events(1_000)
+    track_events(1_000);
+
+    // Needed on standalone example to wait until all events have been sent
+    sleep(Duration::from_secs(10)).await;
 }
 
 fn track_events(iterations: i32) {

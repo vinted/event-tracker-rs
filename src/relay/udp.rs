@@ -1,4 +1,5 @@
 use super::Relay;
+use crate::EventBase;
 use bytes::Bytes;
 use futures_channel::mpsc::{self, Receiver, Sender};
 use futures_util::{SinkExt, StreamExt};
@@ -27,9 +28,9 @@ impl Udp {
 }
 
 impl Relay for Udp {
-    fn transport(&self, event: Bytes) -> crate::Result<()> {
+    fn transport(&self, _event_base: EventBase, event: Bytes) -> crate::Result<()> {
         if let Err(ref error) = self.sender.clone().try_send(event) {
-            tracing::error!(error=%error, "Could not send bytes to UDP socket");
+            tracing::error!(%error, "Couldn't send data to UDP relay");
         }
 
         Ok(())
@@ -60,7 +61,7 @@ async fn handle_udp_connection(addr: SocketAddr, receiver: &mut Receiver<Bytes>)
     let udp_socket = match UdpSocket::bind(bind_addr).await {
         Ok(ok) => ok,
         Err(ref error) => {
-            tracing::error!(error=%error, "Could not bind to UDP socket");
+            tracing::error!(%error, "Couldn't bind to UDP socket");
 
             return;
         }
@@ -72,7 +73,7 @@ async fn handle_udp_connection(addr: SocketAddr, receiver: &mut Receiver<Bytes>)
 
     while let Some(bytes) = receiver.next().await {
         if let Err(ref error) = sink.send((bytes, addr)).await {
-            tracing::error!(error=%error, "Could not send data to UDP socket");
+            tracing::error!(%error, "Couldn't send data to UDP relay");
 
             break;
         };

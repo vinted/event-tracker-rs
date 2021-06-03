@@ -1,12 +1,9 @@
 use serde::Serialize;
 use std::{fmt::Debug, time::SystemTime};
 
-/// Event to track
+/// Event base
 #[derive(Debug, Serialize)]
-pub struct Event<T>
-where
-    T: Debug + Serialize,
-{
+pub struct EventBase {
     /// Event name
     pub event: &'static str,
 
@@ -15,6 +12,17 @@ where
 
     /// Current time in milliseconds since unix epoch
     pub time: u128,
+}
+
+/// Event to track
+#[derive(Debug, Serialize)]
+pub struct Event<T>
+where
+    T: Debug + Serialize,
+{
+    /// Event base
+    #[serde(flatten)]
+    pub base: EventBase,
 
     /// Additional tracking data
     #[serde(flatten)]
@@ -28,12 +36,14 @@ where
     /// Creates an instance of [`Event`]
     pub fn new(event: &'static str, portal: impl Into<String>, tracking_data: T) -> Self {
         Self {
-            event,
-            portal: portal.into(),
-            time: SystemTime::now()
-                .duration_since(SystemTime::UNIX_EPOCH)
-                .expect("SystemTime before UNIX_EPOCH")
-                .as_millis(),
+            base: EventBase {
+                event,
+                portal: portal.into(),
+                time: SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .expect("SystemTime before UNIX_EPOCH")
+                    .as_millis(),
+            },
             tracking_data,
         }
     }
