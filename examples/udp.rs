@@ -1,12 +1,9 @@
 use serde::Serialize;
-use tracing::Level;
 use vinted_event_tracker::*;
 
-#[tokio::main(worker_threads = 1)]
+#[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt()
-        .with_max_level(Level::DEBUG)
-        .finish();
+    tracing_subscriber::fmt::init();
 
     let addr = "0.0.0.0:5005".parse().expect("valid addr");
 
@@ -26,7 +23,7 @@ fn track_events(iterations: i32) {
     }
 
     for iteration in 1..iterations {
-        let event = Event::new("event", "portal", SearchEvent { iteration });
+        let event = Event::new("event", "portal", 1234, SearchEvent { iteration });
 
         if let Err(ref error) = track(event) {
             tracing::error!(%error, "Couldn't track an event");

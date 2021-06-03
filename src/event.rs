@@ -12,6 +12,9 @@ pub struct EventBase {
 
     /// Current time in milliseconds since unix epoch
     pub time: u128,
+
+    /// Debug pin
+    pub debug_pin: Option<i32>,
 }
 
 /// Event to track
@@ -34,7 +37,12 @@ where
     T: Debug + Serialize,
 {
     /// Creates an instance of [`Event`]
-    pub fn new(event: &'static str, portal: impl Into<String>, tracking_data: T) -> Self {
+    pub fn new(
+        event: &'static str,
+        portal: impl Into<String>,
+        debug_pin: impl Into<Option<i32>>,
+        tracking_data: T,
+    ) -> Self {
         Self {
             base: EventBase {
                 event,
@@ -43,6 +51,7 @@ where
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .expect("SystemTime before UNIX_EPOCH")
                     .as_millis(),
+                debug_pin: debug_pin.into(),
             },
             tracking_data,
         }

@@ -17,7 +17,9 @@ Configure the crate in your application executable, e.g. `src/main.rs` or `src/b
 ```rust
 let addr = "0.0.0.0:5005".parse().expect("valid addr");
 let udp_relay = vinted_event_tracker::relay::Udp::new(addr);
-let _ = vinted_event_tracker::set_relay(udp_relay);
+if let Err(ref error) = vinted_event_tracker::set_relay(udp_relay) {
+    error!(%error, "Couldn't initialize event tracker");
+}
 ```
 
 In your library code, create an event structure and use it for tracking
@@ -44,4 +46,5 @@ let _ = vinted_event_tracker::track(event);
 Tracker implementations:
 
 - `vinted_event_tracker::relay::Noop`
+- `vinted_event_tracker::relay::Http`
 - `vinted_event_tracker::relay::Udp`
