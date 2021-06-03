@@ -23,7 +23,7 @@
 //!     }
 //!
 //!     for iteration in 1..iterations {
-//!         let event = Event::new("event", "portal", SearchEvent { iteration });
+//!         let event = Event::new("event", "portal", 1234, SearchEvent { iteration });
 //!
 //!         let _ = track(event);
 //!     }
@@ -47,7 +47,7 @@
 //!     query: "shoes".to_string(),
 //! };
 //!
-//! let event = Event::new("event", "portal", search_event);
+//! let event = Event::new("event", "portal", 1234, search_event);
 //!
 //! let _ = vinted_event_tracker::track(event);
 //! ```
