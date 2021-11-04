@@ -29,7 +29,13 @@ impl Udp {
 
 impl Relay for Udp {
     fn transport(&self, _event_base: EventBase, event: Bytes) -> crate::Result<()> {
-        if let Err(ref error) = self.sender.clone().try_send(event) {
+        let mut sender = self.sender.clone();
+
+        if sender.is_closed() {
+            return Ok(());
+        }
+
+        if let Err(ref error) = sender.try_send(event) {
             tracing::error!(%error, "Couldn't send data to UDP relay");
         }
 
