@@ -15,36 +15,45 @@ vinted_event_tracker = { git = "https://github.com/vinted/event-tracker-rs" }
 Configure the crate in your application executable, e.g. `src/main.rs` or `src/bin/executable_name.rs`.
 
 ```rust
-let addr = "0.0.0.0:5005".parse().expect("valid addr");
-let udp_relay = vinted_event_tracker::relay::Udp::new(addr);
-if let Err(ref error) = vinted_event_tracker::set_relay(udp_relay) {
-    error!(%error, "Couldn't initialize event tracker");
+use serde::Serialize;
+use vinted_event_tracker::*;
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let remote_addr = "0.0.0.0:5005".parse()?;
+    let udp_relay = Udp::bind(remote_addr).await?;
+
+    set_relay(udp_relay)?;
+
+    Ok(())
 }
 ```
 
 In your library code, create an event structure and use it for tracking
 
 ```rust
-#[derive(Debug, Serialize)]
-struct SearchEvent {
-    total: i32,
-    timed_out: bool,
-    query: String,
+use serde::Serialize;
+use vinted_event_tracker::*;
+
+fn track_search_event() {
+    #[derive(Debug, Serialize)]
+    struct SearchEvent<'a> {
+        total: i32,
+        timed_out: bool,
+        query: &'a str,
+    }
+
+    let event = "event_name";
+    let portal = "fr";
+    let debug_pin = Some(1234);
+    let search_event = SearchEvent {
+        total: 123,
+        timed_out: false,
+        query: "shoes",
+    };
+
+    let event = Event::new(event, portal, debug_pin, search_event);
+
+    let _ = track(event);
 }
-
-let search_event = SearchEvent {
-    total: 123,
-    timed_out: false,
-    query: "shoes".to_string(),
-};
-
-let event = vinted_event_tracker::Event::new("event", "portal", search_event);
-
-let _ = vinted_event_tracker::track(event);
 ```
-
-Tracker implementations:
-
-- `vinted_event_tracker::relay::Noop`
-- `vinted_event_tracker::relay::Http`
-- `vinted_event_tracker::relay::Udp`
