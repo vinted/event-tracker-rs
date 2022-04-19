@@ -9,7 +9,7 @@
 //! async fn main() {
 //!     let addr = "0.0.0.0:5005".parse().expect("valid addr");
 //!
-//!     let udp_relay = Udp::new(addr);
+//!     let udp_relay = Udp::bind(addr).await.expect("valid udp relay");
 //!
 //!     let _ = set_relay(udp_relay);
 //!
@@ -113,10 +113,7 @@ const UNINITIALIZED: usize = 0;
 const INITIALIZING: usize = 1;
 const INITIALIZED: usize = 2;
 
-/// Result type alias with consistent error type
-type Result<T> = std::result::Result<T, Error>;
-
-fn set_relay_inner<F>(make_relay: F) -> Result<()>
+fn set_relay_inner<F>(make_relay: F) -> Result<(), Error>
 where
     F: FnOnce() -> &'static dyn Relay,
 {
@@ -156,12 +153,12 @@ fn relay() -> &'static dyn Relay {
 }
 
 /// Initializes [`Relay`] for the whole application
-pub fn set_relay<T: 'static + Relay>(relay: T) -> Result<()> {
+pub fn set_relay<T: 'static + Relay>(relay: T) -> Result<(), Error> {
     set_relay_inner(|| Box::leak(Box::new(relay)))
 }
 
 /// Tracks the actual event
-pub fn track<T>(event: Event<T>) -> Result<()>
+pub fn track<T>(event: Event<T>) -> Result<(), Error>
 where
     T: std::fmt::Debug + serde::Serialize,
 {

@@ -1,5 +1,4 @@
-use super::Relay;
-use crate::EventBase;
+use crate::*;
 
 /// A [`Relay`] that won't do anything with events
 #[derive(Debug, Default, Clone, Copy)]
@@ -13,7 +12,7 @@ impl Noop {
 }
 
 impl Relay for Noop {
-    fn transport(&self, _event_base: EventBase, _event: bytes::Bytes) -> crate::Result<()> {
+    fn transport(&self, _event_base: EventBase, _event: bytes::Bytes) -> Result<(), Error> {
         Ok(())
     }
 }

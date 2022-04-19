@@ -7,7 +7,7 @@ async fn main() {
 
     let addr = "0.0.0.0:5005".parse().expect("valid addr");
 
-    let udp_relay = Udp::new(addr);
+    let udp_relay = Udp::bind(addr).await.expect("valid udp relay");
 
     if let Err(ref error) = set_relay(udp_relay) {
         tracing::error!(%error, "Couldn't set UDP relay");

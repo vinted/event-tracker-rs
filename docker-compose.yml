@@ -1,18 +1,17 @@
 version: '3.3'
 
 services:
-  udp-listener:
-    ports:
-      - '0.0.0.0:5005:5005'
-      - '0.0.0.0:5005:5005/udp'
-    container_name: udp-listener
+  my-udp-listener:
     image: mendhak/udp-listener
+    ports:
+      - 0.0.0.0:5005:5005
+      - 0.0.0.0:5005:5005/udp
 
-  http-listener:
+  my-http-listener:
     image: mendhak/http-https-echo
     environment:
       - HTTP_PORT=8888
       - HTTPS_PORT=9999
     ports:
-      - '0.0.0.0:8888:8888'
-      - '0.0.0.0:9999:9999'
+      - 0.0.0.0:8888:8888
+      - 0.0.0.0:9999:9999
