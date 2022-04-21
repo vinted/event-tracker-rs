@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{Error, EventBase, Relay};
 use bytes::Bytes;
 use reqwest::{header, Client, Url};
 
