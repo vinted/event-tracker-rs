@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{Error, EventBase, Relay};
 
 /// A [`Relay`] that won't do anything with events
 #[derive(Debug, Default, Clone, Copy)]

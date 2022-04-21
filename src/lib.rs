@@ -35,7 +35,8 @@
     unconditional_recursion,
     unknown_lints,
     unreachable_code,
-    unused_mut
+    unused_mut,
+    clippy::wildcard_imports
 )]
 
 #[macro_use]
