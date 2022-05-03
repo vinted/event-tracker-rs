@@ -1,6 +1,9 @@
 use crate::{Error, EventBase, Relay};
 use bytes::Bytes;
-use std::{net::SocketAddr, sync::Arc};
+use std::{
+    net::{SocketAddr, ToSocketAddrs},
+    sync::Arc,
+};
 use tokio::net::UdpSocket;
 
 /// A [`Relay`] that will print events to UDP listener
@@ -11,7 +14,13 @@ pub struct Udp {
 
 impl Udp {
     /// [Udp] relay will bind to the given remote_addr
-    pub async fn bind(remote_addr: SocketAddr) -> Result<Self, Error> {
+    pub async fn bind<S>(remote_addrs: S) -> Result<Self, Error>
+    where
+        S: ToSocketAddrs,
+    {
+        let mut remote_addrs = remote_addrs.to_socket_addrs()?;
+        let remote_addr = remote_addrs.next().ok_or(Error::NoRemoteAddr)?;
+
         let local_addr: SocketAddr = if remote_addr.is_ipv4() {
             "0.0.0.0:0"
         } else {
