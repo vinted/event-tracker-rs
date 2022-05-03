@@ -12,6 +12,9 @@ pub enum Error {
 
     /// FromStr error
     AddrParse(std::net::AddrParseError),
+
+    /// FromStr error
+    NoRemoteAddr,
 }
 
 impl std::error::Error for Error {}
@@ -25,6 +28,7 @@ impl std::fmt::Display for Error {
             Self::SerdeJson(e) => e.fmt(f),
             Self::Io(e) => e.fmt(f),
             Self::AddrParse(e) => e.fmt(f),
+            Self::NoRemoteAddr => "no remote address specified".fmt(f),
         }
     }
 }
