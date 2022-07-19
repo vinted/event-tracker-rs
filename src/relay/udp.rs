@@ -1,15 +1,20 @@
 use crate::{Error, EventBase, Relay};
 use bytes::Bytes;
-use std::{
-    net::{SocketAddr, ToSocketAddrs},
-    sync::Arc,
-};
+use futures_channel::mpsc::{self, Receiver, Sender};
+use futures_util::StreamExt;
+use std::net::{SocketAddr, ToSocketAddrs};
 use tokio::net::UdpSocket;
+
+/// UDP request timeout
+pub const DEFAULT_TIMEOUT: u32 = 10_000;
+
+/// Default UDP socket mpsc channel buffer
+pub const DEFAULT_BUFFER: usize = 10_000;
 
 /// A [`Relay`] that will print events to UDP listener
 #[derive(Debug, Clone)]
 pub struct Udp {
-    udp_socket: Arc<UdpSocket>,
+    sender: Sender<Bytes>,
 }
 
 impl Udp {
@@ -32,22 +37,33 @@ impl Udp {
 
         udp_socket.connect(&remote_addr).await?;
 
-        Ok(Self {
-            udp_socket: Arc::new(udp_socket),
-        })
+        let (sender, receiver) = mpsc::channel(DEFAULT_BUFFER);
+
+        Self::background_task(udp_socket, receiver);
+
+        Ok(Self { sender })
     }
 
-    async fn send(udp_socket: Arc<UdpSocket>, event: Bytes) {
-        if let Err(error) = udp_socket.send(&event).await {
-            tracing::error!(%error, "Couldn't send data to UDP relay");
+    fn background_task(udp_socket: UdpSocket, mut receiver: Receiver<Bytes>) {
+        let _ = tokio::spawn(Box::pin(async move {
+            Self::send(udp_socket, &mut receiver).await;
+        }));
+    }
+
+    async fn send(udp_socket: UdpSocket, receiver: &mut Receiver<Bytes>) {
+        while let Some(bytes) = receiver.next().await {
+            if let Err(ref error) = udp_socket.send(&bytes).await {
+                tracing::error!(%error, "Couldn't send data to UDP relay");
+            };
         }
     }
 }
 
 impl Relay for Udp {
     fn transport(&self, _event_base: EventBase, event: Bytes) -> Result<(), Error> {
-        let udp_socket = self.udp_socket.clone();
-        let _ = tokio::spawn(Self::send(udp_socket, event));
+        if let Err(ref error) = self.sender.clone().try_send(event) {
+            tracing::error!(%error, "Couldn't send data to UDP relay");
+        }
 
         Ok(())
     }
