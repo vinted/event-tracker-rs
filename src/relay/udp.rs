@@ -2,8 +2,7 @@ use crate::{Error, EventBase, Relay};
 use bytes::Bytes;
 use futures_channel::mpsc::{self, Receiver, Sender};
 use futures_util::StreamExt;
-use std::net::{SocketAddr, ToSocketAddrs};
-use tokio::net::UdpSocket;
+use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
 
 /// UDP request timeout
 pub const DEFAULT_TIMEOUT: u32 = 10_000;
@@ -19,7 +18,7 @@ pub struct Udp {
 
 impl Udp {
     /// [Udp] relay will bind to the given remote_addr
-    pub async fn bind<S>(remote_addrs: S) -> Result<Self, Error>
+    pub fn bind<S>(remote_addrs: S) -> Result<Self, Error>
     where
         S: ToSocketAddrs,
     {
@@ -33,9 +32,9 @@ impl Udp {
         }
         .parse()?;
 
-        let udp_socket = UdpSocket::bind(local_addr).await?;
+        let udp_socket = UdpSocket::bind(local_addr)?;
 
-        udp_socket.connect(&remote_addr).await?;
+        udp_socket.connect(&remote_addr)?;
 
         let (sender, receiver) = mpsc::channel(DEFAULT_BUFFER);
 
@@ -52,7 +51,7 @@ impl Udp {
 
     async fn send(udp_socket: UdpSocket, receiver: &mut Receiver<Bytes>) {
         while let Some(bytes) = receiver.next().await {
-            if let Err(ref error) = udp_socket.send(&bytes).await {
+            if let Err(ref error) = udp_socket.send(&bytes) {
                 tracing::error!(%error, "Couldn't send data to UDP relay");
             };
         }
