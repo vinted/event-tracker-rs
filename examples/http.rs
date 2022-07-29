@@ -1,10 +1,7 @@
 use serde::Serialize;
-use std::time::Duration;
-use tokio::time::sleep;
 use vinted_event_tracker::*;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     tracing_subscriber::fmt::init();
 
     let url = "https://0.0.0.0:9999".parse().expect("valid url");
@@ -16,9 +13,6 @@ async fn main() {
     }
 
     track_events(5);
-
-    // Needed on standalone example to wait until all events have been sent
-    sleep(Duration::from_secs(10)).await;
 }
 
 fn track_events(iterations: i32) {
