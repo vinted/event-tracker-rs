@@ -20,7 +20,7 @@ use vinted_event_tracker::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let udp_relay = Udp::bind("0.0.0.0:5005").await?;
+    let udp_relay = Udp::bind("0.0.0.0:5005")?;
 
     set_relay(udp_relay)?;
 
