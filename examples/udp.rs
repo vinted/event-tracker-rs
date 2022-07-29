@@ -1,8 +1,7 @@
 use serde::Serialize;
 use vinted_event_tracker::*;
 
-#[tokio::main]
-async fn main() {
+fn main() {
     tracing_subscriber::fmt::init();
 
     let udp_relay = Udp::bind("0.0.0.0:5005").expect("valid udp relay");

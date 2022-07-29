@@ -1,6 +1,6 @@
 use crate::{Error, EventBase, Relay};
 use bytes::Bytes;
-use reqwest::{header, Client, Url};
+use reqwest::{blocking::Client, header, Url};
 
 /// A [`Relay`] that will print events to HTTP listener
 #[derive(Debug, Clone)]
@@ -17,10 +17,13 @@ impl Http {
             url,
         }
     }
+}
 
-    async fn send(client: Client, url: Url, event_base: EventBase, bytes: Bytes) {
-        let mut request = client
-            .post(url)
+impl Relay for Http {
+    fn transport(&self, event_base: EventBase, bytes: Bytes) -> Result<(), Error> {
+        let mut request = self
+            .client
+            .post(self.url.clone())
             .body(bytes)
             .header(header::CONTENT_TYPE, "application/json")
             .header("X-Local-Time", event_base.time.to_string())
@@ -31,38 +34,29 @@ impl Http {
             request = request.header("X-Debug-Pin", debug_pin);
         }
 
-        let response = match request.send().await {
+        let response = match request.send() {
             Ok(response) => response,
             Err(error) => {
                 tracing::error!(%error, "Couldn't send data to HTTP relay");
-                return;
+                return Ok(());
             }
         };
 
         let status = response.status();
 
-        if !status.is_success() {
+        if status.is_client_error() || status.is_server_error() {
             let status_code = status.as_u16();
-            let response_body = response.text().await;
+            let response_body = response.text();
 
             match response_body {
-                Ok(body) => {
-                    tracing::error!(%status_code, %body, "Couldn't complete HTTP request successfully");
+                Ok(error) => {
+                    tracing::error!(%status_code, %error, "Couldn't complete HTTP request successfully");
                 }
                 Err(error) => {
                     tracing::error!(%status_code, %error, "Couldn't complete HTTP request successfully");
                 }
             }
         }
-    }
-}
-
-impl Relay for Http {
-    fn transport(&self, event_base: EventBase, event: Bytes) -> Result<(), Error> {
-        let client = self.client.clone();
-        let url = self.url.clone();
-
-        let _ = tokio::spawn(Self::send(client, url, event_base, event));
 
         Ok(())
     }
