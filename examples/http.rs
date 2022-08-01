@@ -1,7 +1,8 @@
 use serde::Serialize;
 use vinted_event_tracker::*;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     tracing_subscriber::fmt::init();
 
     let url = "https://0.0.0.0:9999".parse().expect("valid url");
