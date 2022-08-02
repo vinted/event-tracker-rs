@@ -23,7 +23,7 @@ fn track_events(iterations: i32) {
     }
 
     for iteration in 1..iterations {
-        let event = Event::new("system.test", "fr", 1234, SearchEvent { iteration });
+        let event = Event::new("system.test", "fr", Some(1234), SearchEvent { iteration });
 
         if let Err(ref error) = track(event) {
             tracing::error!(%error, "Couldn't track an event");
