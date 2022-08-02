@@ -33,10 +33,8 @@ impl Udp {
 }
 
 impl Relay for Udp {
-    fn transport(&self, _event_base: EventBase, event: Bytes) -> Result<(), Error> {
-        if let Err(ref error) = self.udp_socket.send(&event) {
-            tracing::error!(%error, "Couldn't send data to UDP socket");
-        };
+    fn transport(&self, _: EventBase, event: Bytes) -> Result<(), Error> {
+        let _ = self.udp_socket.send(&event)?;
 
         Ok(())
     }

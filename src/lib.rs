@@ -39,9 +39,6 @@
     clippy::wildcard_imports
 )]
 
-#[macro_use]
-extern crate tracing;
-
 mod error;
 mod event;
 pub mod relay;
@@ -111,12 +108,7 @@ pub fn track<T>(event: Event<T>) -> Result<(), Error>
 where
     T: std::fmt::Debug + serde::Serialize,
 {
-    match serde_json::to_vec(&event) {
-        Ok(buf) => relay().transport(event.base, bytes::Bytes::from(buf)),
-        Err(error) => {
-            error!(%error, "Couldn't serialize event");
+    let bytes = serde_json::to_vec(&event).map(Into::into)?;
 
-            Err(error.into())
-        }
-    }
+    relay().transport(event.base, bytes)
 }

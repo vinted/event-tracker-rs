@@ -8,7 +8,7 @@ pub struct EventBase {
     pub event: &'static str,
 
     /// Portal it's happening in
-    pub portal: String,
+    pub portal: &'static str,
 
     /// Current time in milliseconds since unix epoch
     pub time: u128,
@@ -39,19 +39,19 @@ where
     /// Creates an instance of [`Event`]
     pub fn new(
         event: &'static str,
-        portal: impl Into<String>,
-        debug_pin: impl Into<Option<i32>>,
+        portal: &'static str,
+        debug_pin: Option<i32>,
         tracking_data: T,
     ) -> Self {
         Self {
             base: EventBase {
                 event,
-                portal: portal.into(),
+                portal,
                 time: SystemTime::now()
                     .duration_since(SystemTime::UNIX_EPOCH)
                     .expect("SystemTime before UNIX_EPOCH")
                     .as_millis(),
-                debug_pin: debug_pin.into(),
+                debug_pin,
             },
             tracking_data,
         }
