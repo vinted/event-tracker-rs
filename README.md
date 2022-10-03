@@ -18,8 +18,9 @@ Configure the crate in your application executable, e.g. `src/main.rs` or `src/b
 use serde::Serialize;
 use vinted_event_tracker::*;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let udp_relay = Udp::bind("0.0.0.0:5005")?;
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let udp_relay = Udp::bind("0.0.0.0:5005").await?;
 
     set_relay(udp_relay)?;
 

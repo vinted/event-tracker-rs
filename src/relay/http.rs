@@ -1,4 +1,4 @@
-use crate::{Error, EventBase, Relay};
+use crate::{EventBase, Relay};
 use bytes::Bytes;
 use reqwest::{header, Client, Url};
 
@@ -20,7 +20,7 @@ impl Http {
 }
 
 impl Relay for Http {
-    fn transport(&self, event_base: EventBase, bytes: Bytes) -> Result<(), Error> {
+    fn transport(&self, event_base: EventBase, bytes: Bytes) {
         let url = self.url.clone();
         let client = self.client.clone();
 
@@ -61,7 +61,5 @@ impl Relay for Http {
                 }
             }
         });
-
-        Ok(())
     }
 }
