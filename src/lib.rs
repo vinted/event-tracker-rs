@@ -110,5 +110,7 @@ where
 {
     let bytes = serde_json::to_vec(&event).map(Into::into)?;
 
-    relay().transport(event.base, bytes)
+    relay().transport(event.base, bytes);
+
+    Ok(())
 }

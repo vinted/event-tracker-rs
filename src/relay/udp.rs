@@ -1,16 +1,20 @@
 use crate::{Error, EventBase, Relay};
 use bytes::Bytes;
-use std::net::{SocketAddr, ToSocketAddrs, UdpSocket};
+use std::{
+    net::{SocketAddr, ToSocketAddrs},
+    sync::Arc,
+};
+use tokio::net::UdpSocket;
 
 /// A [`Relay`] that will print events to UDP listener
 #[derive(Debug)]
 pub struct Udp {
-    udp_socket: UdpSocket,
+    udp_socket: Arc<UdpSocket>,
 }
 
 impl Udp {
     /// [Udp] relay will bind to the given remote_addr
-    pub fn bind<S>(remote_addrs: S) -> Result<Self, Error>
+    pub async fn bind<S>(remote_addrs: S) -> Result<Self, Error>
     where
         S: ToSocketAddrs,
     {
@@ -24,18 +28,20 @@ impl Udp {
         }
         .parse()?;
 
-        let udp_socket = UdpSocket::bind(local_addr)?;
+        let udp_socket = UdpSocket::bind(local_addr).await?;
 
-        udp_socket.connect(&remote_addr)?;
+        udp_socket.connect(&remote_addr).await?;
 
-        Ok(Self { udp_socket })
+        Ok(Self {
+            udp_socket: Arc::new(udp_socket),
+        })
     }
 }
 
 impl Relay for Udp {
-    fn transport(&self, _: EventBase, event: Bytes) -> Result<(), Error> {
-        let _ = self.udp_socket.send(&event)?;
+    fn transport(&self, _: EventBase, event: Bytes) {
+        let udp_socket = self.udp_socket.clone();
 
-        Ok(())
+        let _ = tokio::spawn(async move { udp_socket.send(&event).await });
     }
 }

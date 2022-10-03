@@ -7,7 +7,6 @@ mod udp;
 pub use self::http::*;
 pub use self::noop::*;
 pub use self::udp::*;
-use crate::Error;
 
 /// Trait for event transportation
 pub trait Relay {
@@ -15,5 +14,5 @@ pub trait Relay {
     /// - HTTP
     /// - TCP
     /// - UDP
-    fn transport(&self, event_base: crate::EventBase, event: bytes::Bytes) -> Result<(), Error>;
+    fn transport(&self, event_base: crate::EventBase, event: bytes::Bytes);
 }
