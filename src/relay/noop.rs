@@ -12,5 +12,5 @@ impl Noop {
 }
 
 impl Relay for Noop {
-    fn transport(&self, _event_base: EventBase, _event: bytes::Bytes) {}
+    fn transport(&self, _event_base: EventBase, _event: Vec<u8>) {}
 }

@@ -14,5 +14,5 @@ pub trait Relay {
     /// - HTTP
     /// - TCP
     /// - UDP
-    fn transport(&self, event_base: crate::EventBase, event: bytes::Bytes);
+    fn transport(&self, event_base: crate::EventBase, event: Vec<u8>);
 }

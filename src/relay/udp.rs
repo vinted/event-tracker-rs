@@ -1,5 +1,4 @@
 use crate::{Error, EventBase, Relay};
-use bytes::Bytes;
 use std::{
     net::{SocketAddr, ToSocketAddrs},
     sync::Arc,
@@ -39,7 +38,7 @@ impl Udp {
 }
 
 impl Relay for Udp {
-    fn transport(&self, _: EventBase, event: Bytes) {
+    fn transport(&self, _: EventBase, event: Vec<u8>) {
         let udp_socket = self.udp_socket.clone();
 
         let _ = tokio::spawn(async move { udp_socket.send(&event).await });
