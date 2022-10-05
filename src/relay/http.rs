@@ -1,5 +1,4 @@
 use crate::{EventBase, Relay};
-use bytes::Bytes;
 use reqwest::{header, Client, Url};
 
 /// A [`Relay`] that will print events to HTTP listener
@@ -20,7 +19,7 @@ impl Http {
 }
 
 impl Relay for Http {
-    fn transport(&self, event_base: EventBase, bytes: Bytes) {
+    fn transport(&self, event_base: EventBase, bytes: Vec<u8>) {
         let url = self.url.clone();
         let client = self.client.clone();
 

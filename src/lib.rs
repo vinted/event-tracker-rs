@@ -108,9 +108,9 @@ pub fn track<T>(event: Event<T>) -> Result<(), Error>
 where
     T: std::fmt::Debug + serde::Serialize,
 {
-    let bytes = serde_json::to_vec(&event).map(Into::into)?;
+    let event_vec = serde_json::to_vec(&event)?;
 
-    relay().transport(event.base, bytes);
+    relay().transport(event.base, event_vec);
 
     Ok(())
 }
