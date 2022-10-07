@@ -1,10 +1,10 @@
 # Event Tracker
 
-An abstraction for event tracking written in Rust.
+A Rust port of [vinted/event-tracker](https://github.com/vinted/event-tracker)
 
 ## Installation
 
-Add event tracker to your dependencies in `Cargo.toml`:
+Add this line to your application's `Cargo.toml`:
 
 ```toml
 vinted_event_tracker = { git = "https://github.com/vinted/event-tracker-rs" }
@@ -12,7 +12,7 @@ vinted_event_tracker = { git = "https://github.com/vinted/event-tracker-rs" }
 
 ## Usage
 
-Configure the crate in your application executable.
+Configure the crate in your application executable, e.g. `src/main.rs` or `src/bin/executable_name.rs`.
 
 ```rust
 use serde::Serialize;
@@ -20,7 +20,7 @@ use vinted_event_tracker::*;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let udp_relay = UdpRelay::bind("0.0.0.0:5005").await?;
+    let udp_relay = Udp::bind("0.0.0.0:5005").await?;
 
     set_relay(udp_relay)?;
 
@@ -42,12 +42,17 @@ fn track_search_event() {
         query: &'a str,
     }
 
+    let event = "event_name";
+    let portal = "fr";
+    let debug_pin = Some(1234);
     let search_event = SearchEvent {
         total: 123,
         timed_out: false,
         query: "shoes",
     };
 
-    Event::track("event_name", "portal", Some(123), search_event);
+    let event = Event::new(event, portal, debug_pin, search_event);
+
+    let _ = track(event);
 }
 ```
