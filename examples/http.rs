@@ -7,7 +7,7 @@ async fn main() {
 
     let url = "https://0.0.0.0:9999".parse().expect("valid url");
 
-    let http_relay = Http::new(url);
+    let http_relay = HttpRelay::new(url);
 
     if let Err(ref error) = set_relay(http_relay) {
         tracing::error!(%error, "Couldn't set HTTP relay");
@@ -23,9 +23,7 @@ fn track_events(iterations: i32) {
     }
 
     for iteration in 1..iterations {
-        let event = Event::new("system.test", "fr", Some(1234), SearchEvent { iteration });
-
-        if let Err(ref error) = track(event) {
+        if let Err(ref error) = Event::new("system.test", "fr", SearchEvent { iteration }).track() {
             tracing::error!(%error, "Couldn't track an event");
         }
     }
