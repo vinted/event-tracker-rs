@@ -119,9 +119,9 @@ impl std::error::Error for SetRelayError {}
 
 type BoxError = Box<dyn std::error::Error + Send + Sync>;
 
-/// Event base
-#[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct EventBase {
+/// Event to track
+#[derive(Debug, Serialize)]
+pub struct Event {
     event: &'static str,
 
     portal: &'static str,
@@ -131,53 +131,44 @@ pub struct EventBase {
     debug_pin: Option<i32>,
 }
 
-/// Event to track
-#[derive(Debug, PartialEq, Eq, Serialize)]
-pub struct Event<T>
-where
-    T: std::fmt::Debug + Serialize,
-{
-    #[serde(flatten)]
-    base: EventBase,
-
-    #[serde(flatten)]
-    tracking_data: T,
-}
-
-impl<T> Event<T>
-where
-    T: std::fmt::Debug + Serialize,
-{
+impl Event {
     /// Creates an instance of [`Event`]
-    pub fn new(event: &'static str, portal: &'static str, tracking_data: T) -> Self {
-        Self {
-            base: EventBase {
-                event,
-                portal,
-                time: std::time::SystemTime::now()
-                    .duration_since(std::time::SystemTime::UNIX_EPOCH)
-                    .expect("SystemTime before UNIX_EPOCH")
-                    .as_millis(),
-                debug_pin: None,
-            },
-            tracking_data,
-        }
-    }
-
-    /// Sets debug pin value
-    pub fn debug_pin(mut self, debug_pin: i32) -> Self {
-        self.base.debug_pin = Some(debug_pin);
-        self
-    }
-
-    /// Tracks the business event
-    pub fn track(self) -> Result<(), BoxError>
+    pub fn track<T>(
+        event: &'static str,
+        portal: &'static str,
+        debug_pin: Option<i32>,
+        tracking_data: T,
+    ) -> Result<(), BoxError>
     where
         T: std::fmt::Debug + Serialize,
     {
-        let serialized_event = serde_json::to_vec(&self)?;
+        #[derive(Serialize)]
+        struct SerializedEvent<'a, T> {
+            #[serde(flatten)]
+            base: &'a Event,
 
-        relay().transport(self.base, serialized_event)
+            #[serde(flatten)]
+            tracking_data: T,
+        }
+
+        let event = Self {
+            event,
+            portal,
+            time: std::time::SystemTime::now()
+                .duration_since(std::time::SystemTime::UNIX_EPOCH)
+                .expect("SystemTime before UNIX_EPOCH")
+                .as_millis(),
+            debug_pin,
+        };
+
+        let event_to_serialize = SerializedEvent {
+            base: &event,
+            tracking_data,
+        };
+
+        let serialized_event = serde_json::to_vec(&event_to_serialize)?;
+
+        relay().transport(event, serialized_event)
     }
 }
 
@@ -185,20 +176,20 @@ where
 
 /// Trait for event transportation
 pub trait Relay {
-    /// Accepts serialized event as bytes that should be sent to a certain protocol, such as:
+    /// Accepts serialized event and serialized bytes to be sent to a certain protocol, such as:
     /// - HTTP
     /// - HTTPS
     /// - TCP
     /// - UDP
     /// - Kafka
-    fn transport(&self, event_base: EventBase, event: Vec<u8>) -> Result<(), BoxError>;
+    fn transport(&self, event: Event, bytes: Vec<u8>) -> Result<(), BoxError>;
 }
 
 #[derive(Debug, Default, Clone, Copy)]
 struct NopRelay;
 
 impl Relay for NopRelay {
-    fn transport(&self, _: EventBase, _: Vec<u8>) -> Result<(), BoxError> {
+    fn transport(&self, _: Event, _: Vec<u8>) -> Result<(), BoxError> {
         Ok(())
     }
 }
@@ -239,10 +230,10 @@ impl UdpRelay {
 }
 
 impl Relay for UdpRelay {
-    fn transport(&self, _: EventBase, event: Vec<u8>) -> Result<(), BoxError> {
+    fn transport(&self, _: Event, bytes: Vec<u8>) -> Result<(), BoxError> {
         let udp_socket = self.udp_socket.clone();
 
-        let _ = tokio::spawn(async move { udp_socket.send(&event).await });
+        let _ = tokio::spawn(async move { udp_socket.send(&bytes).await });
 
         Ok(())
     }
@@ -266,17 +257,17 @@ impl HttpRelay {
 }
 
 impl Relay for HttpRelay {
-    fn transport(&self, event_base: EventBase, bytes: Vec<u8>) -> Result<(), BoxError> {
+    fn transport(&self, event: Event, bytes: Vec<u8>) -> Result<(), BoxError> {
         let mut request = self
             .client
             .post(self.url.clone())
             .body(bytes)
             .header(header::CONTENT_TYPE, "application/json")
-            .header("X-Local-Time", event_base.time.to_string())
+            .header("X-Local-Time", event.time.to_string())
             .header("X-Platform", "web")
-            .header("X-Portal", event_base.portal);
+            .header("X-Portal", event.portal);
 
-        if let Some(debug_pin) = event_base.debug_pin {
+        if let Some(debug_pin) = event.debug_pin {
             request = request.header("X-Debug-Pin", debug_pin);
         }
 

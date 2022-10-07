@@ -48,6 +48,6 @@ fn track_search_event() {
         query: "shoes",
     };
 
-    Event::new("event_name", "portal", search_event).track();
+    Event::track("event_name", "portal", Some(123), search_event);
 }
 ```
