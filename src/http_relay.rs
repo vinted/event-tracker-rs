@@ -1,15 +1,15 @@
-use crate::{EventBase, Relay};
+use crate::{Metadata, Relay};
 use reqwest::{header, Client, Url};
 
 /// A [`Relay`] that will print events to HTTP listener
 #[derive(Debug, Clone)]
-pub struct Http {
+pub struct HttpRelay {
     client: Client,
     url: Url,
 }
 
-impl Http {
-    /// Creates an instance of [`Http`] [`Relay`]
+impl HttpRelay {
+    /// Creates an instance of [HttpRelay]
     pub fn new(url: Url) -> Self {
         Self {
             client: Client::new(),
@@ -18,24 +18,22 @@ impl Http {
     }
 }
 
-impl Relay for Http {
-    fn transport(&self, event_base: EventBase, bytes: Vec<u8>) {
-        let url = self.url.clone();
-        let client = self.client.clone();
+impl Relay for HttpRelay {
+    fn transport(&self, metadata: Metadata, serialized_event: Vec<u8>) {
+        let mut request = self
+            .client
+            .post(self.url.clone())
+            .body(serialized_event)
+            .header(header::CONTENT_TYPE, "application/json")
+            .header("X-Local-Time", metadata.time.to_string())
+            .header("X-Platform", "web")
+            .header("X-Portal", metadata.portal);
+
+        if let Some(debug_pin) = metadata.debug_pin {
+            request = request.header("X-Debug-Pin", debug_pin);
+        }
 
         let _ = tokio::spawn(async move {
-            let mut request = client
-                .post(url)
-                .body(bytes)
-                .header(header::CONTENT_TYPE, "application/json")
-                .header("X-Local-Time", event_base.time.to_string())
-                .header("X-Platform", "web")
-                .header("X-Portal", event_base.portal);
-
-            if let Some(debug_pin) = event_base.debug_pin {
-                request = request.header("X-Debug-Pin", debug_pin);
-            }
-
             let response = match request.send().await {
                 Ok(response) => response,
                 Err(error) => {
