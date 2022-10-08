@@ -1,4 +1,4 @@
-use crate::{EventBase, Relay};
+use crate::{Metadata, Relay};
 use std::{
     io,
     net::{SocketAddr, ToSocketAddrs},
@@ -8,12 +8,12 @@ use tokio::net::UdpSocket;
 
 /// A [`Relay`] that will print events to UDP listener
 #[derive(Debug)]
-pub struct Udp {
+pub struct UdpRelay {
     udp_socket: Arc<UdpSocket>,
 }
 
-impl Udp {
-    /// [Udp] relay will bind to the given remote_addr
+impl UdpRelay {
+    /// [UdpRelay] will bind to the given remote_addr
     pub async fn new<S>(remote_addrs: S) -> Result<Self, io::Error>
     where
         S: ToSocketAddrs,
@@ -46,11 +46,11 @@ impl Udp {
     }
 }
 
-impl Relay for Udp {
-    fn transport(&self, _: EventBase, event: Vec<u8>) {
+impl Relay for UdpRelay {
+    fn transport(&self, _: Metadata, serialized_event: Vec<u8>) {
         let udp_socket = self.udp_socket.clone();
 
-        let _ = tokio::spawn(async move { udp_socket.send(&event).await });
+        let _ = tokio::spawn(async move { udp_socket.send(&serialized_event).await });
     }
 }
 
@@ -60,7 +60,7 @@ mod tests {
 
     #[test]
     fn parses_local_addr_correctly() {
-        let _ = Udp::local_addr_v4();
-        let _ = Udp::local_addr_v6();
+        let _ = UdpRelay::local_addr_v4();
+        let _ = UdpRelay::local_addr_v6();
     }
 }

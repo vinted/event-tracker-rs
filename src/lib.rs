@@ -39,17 +39,14 @@
     clippy::wildcard_imports
 )]
 
-mod error;
-mod event;
+mod http_relay;
+mod udp_relay;
 
-mod http;
-mod udp;
+pub use self::http_relay::*;
+pub use self::udp_relay::*;
 
-pub use self::error::*;
-pub use self::event::*;
-pub use self::http::*;
-pub use self::udp::*;
-
+use serde::Serialize;
+use std::time::SystemTime;
 use std::{
     hint::spin_loop,
     sync::atomic::{AtomicUsize, Ordering},
@@ -123,19 +120,84 @@ impl std::fmt::Display for SetRelayError {
 
 impl std::error::Error for SetRelayError {}
 
-/// Tracks the actual event
-pub fn track<T>(event: Event<T>) -> Result<(), Error>
+/// Tracks event
+#[tracing::instrument(skip(debug_pin, tracking_data))]
+pub fn track<T>(event: &'static str, portal: &'static str, debug_pin: Option<i32>, tracking_data: T)
 where
-    T: std::fmt::Debug + serde::Serialize,
+    T: Serialize,
 {
-    let event_vec = serde_json::to_vec(&event)?;
+    #[derive(Serialize)]
+    struct EventWithTrackingData<'a, T>
+    where
+        T: Serialize,
+    {
+        #[serde(flatten)]
+        metadata: &'a Metadata,
 
-    relay().transport(event.base, event_vec);
+        #[serde(flatten)]
+        tracking_data: T,
+    }
 
-    Ok(())
+    let metadata = Metadata {
+        event,
+        portal,
+        time: SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .expect("SystemTime before UNIX_EPOCH")
+            .as_millis(),
+        debug_pin,
+    };
+
+    let event_with_tracking_data = {
+        EventWithTrackingData {
+            metadata: &metadata,
+            tracking_data,
+        }
+    };
+
+    match serde_json::to_vec(&event_with_tracking_data) {
+        Ok(bytes) => relay().transport(metadata, bytes),
+        Err(error) => {
+            tracing::error!(%error, "Could not serialize event")
+        }
+    }
 }
 
-/// Trait for event transportation
+/// Event metadata
+#[derive(Debug, Serialize)]
+pub struct Metadata {
+    event: &'static str,
+
+    portal: &'static str,
+
+    time: u128,
+
+    debug_pin: Option<i32>,
+}
+
+impl Metadata {
+    /// Event name
+    pub fn event(&self) -> &'static str {
+        self.event
+    }
+
+    /// Portal it's happening in
+    pub fn portal(&self) -> &'static str {
+        self.portal
+    }
+
+    /// Current time in milliseconds since unix epoch
+    pub fn time(&self) -> u128 {
+        self.time
+    }
+
+    /// Debug pin
+    pub fn debug_pin(&self) -> Option<i32> {
+        self.debug_pin
+    }
+}
+
+/// An abstraction for event transmission over the wire
 pub trait Relay {
     /// Accepts event, serialized in JSON, in a form of bytes.
     ///
@@ -143,11 +205,11 @@ pub trait Relay {
     /// - HTTP
     /// - TCP
     /// - UDP
-    fn transport(&self, event_base: EventBase, event: Vec<u8>);
+    fn transport(&self, metadata: Metadata, serialized_event: Vec<u8>);
 }
 
 struct NopRelay;
 
 impl Relay for NopRelay {
-    fn transport(&self, _: EventBase, _: Vec<u8>) {}
+    fn transport(&self, _: Metadata, _: Vec<u8>) {}
 }
