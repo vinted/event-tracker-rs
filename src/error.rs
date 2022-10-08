@@ -1,9 +1,6 @@
 /// Crate level error enum
 #[derive(Debug)]
 pub enum Error {
-    /// Occurs when a relay has already been initialized
-    RelayAlreadyInitialized,
-
     /// Occurs when an event cannot be serialized
     SerdeJson(serde_json::Error),
 
@@ -22,9 +19,6 @@ impl std::error::Error for Error {}
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::RelayAlreadyInitialized => {
-                "attempted to set relay after the relay was already initialized".fmt(f)
-            }
             Self::SerdeJson(e) => e.fmt(f),
             Self::Io(e) => e.fmt(f),
             Self::AddrParse(e) => e.fmt(f),
