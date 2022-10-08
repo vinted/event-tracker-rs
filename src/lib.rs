@@ -59,7 +59,7 @@ const UNINITIALIZED: usize = 0;
 const INITIALIZING: usize = 1;
 const INITIALIZED: usize = 2;
 
-fn set_relay_inner<F>(make_relay: F) -> Result<(), Error>
+fn set_relay_inner<F>(make_relay: F) -> Result<(), SetRelayError>
 where
     F: FnOnce() -> &'static dyn Relay,
 {
@@ -83,9 +83,9 @@ where
             while STATE.load(Ordering::SeqCst) == INITIALIZING {
                 spin_loop();
             }
-            Err(Error::RelayAlreadyInitialized)
+            Err(SetRelayError(()))
         }
-        _ => Err(Error::RelayAlreadyInitialized),
+        _ => Err(SetRelayError(())),
     }
 }
 
@@ -99,7 +99,7 @@ fn relay() -> &'static dyn Relay {
 }
 
 /// Initializes [`Relay`] for the whole application
-pub fn set_relay<T: 'static + Relay>(relay: T) -> Result<(), Error> {
+pub fn set_relay<T: 'static + Relay>(relay: T) -> Result<(), SetRelayError> {
     set_relay_inner(|| Box::leak(Box::new(relay)))
 }
 
@@ -114,3 +114,20 @@ where
 
     Ok(())
 }
+
+/// The type returned by [`set_relay`] if [`set_relay`] has already been called.
+pub struct SetRelayError(());
+
+impl std::fmt::Debug for SetRelayError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SetRelayError").finish()
+    }
+}
+
+impl std::fmt::Display for SetRelayError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        "attempted to set relay after the relay was already initialized".fmt(f)
+    }
+}
+
+impl std::error::Error for SetRelayError {}
