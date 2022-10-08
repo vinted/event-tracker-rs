@@ -41,18 +41,21 @@
 
 mod error;
 mod event;
-pub mod relay;
+
+mod http;
+mod udp;
 
 pub use self::error::*;
 pub use self::event::*;
-pub use self::relay::*;
+pub use self::http::*;
+pub use self::udp::*;
 
 use std::{
     hint::spin_loop,
     sync::atomic::{AtomicUsize, Ordering},
 };
 
-static mut RELAY: &dyn Relay = &Noop;
+static mut RELAY: &dyn Relay = &NopRelay;
 static STATE: AtomicUsize = AtomicUsize::new(0);
 
 const UNINITIALIZED: usize = 0;
@@ -91,28 +94,16 @@ where
 
 fn relay() -> &'static dyn Relay {
     if STATE.load(Ordering::SeqCst) != INITIALIZED {
-        static NOP: Noop = Noop;
+        static NOP: NopRelay = NopRelay;
         &NOP
     } else {
         unsafe { RELAY }
     }
 }
 
-/// Initializes [`Relay`] for the whole application
+/// Sets the global [Relay]
 pub fn set_relay<T: 'static + Relay>(relay: T) -> Result<(), SetRelayError> {
     set_relay_inner(|| Box::leak(Box::new(relay)))
-}
-
-/// Tracks the actual event
-pub fn track<T>(event: Event<T>) -> Result<(), Error>
-where
-    T: std::fmt::Debug + serde::Serialize,
-{
-    let event_vec = serde_json::to_vec(&event)?;
-
-    relay().transport(event.base, event_vec);
-
-    Ok(())
 }
 
 /// The type returned by [`set_relay`] if [`set_relay`] has already been called.
@@ -131,3 +122,32 @@ impl std::fmt::Display for SetRelayError {
 }
 
 impl std::error::Error for SetRelayError {}
+
+/// Tracks the actual event
+pub fn track<T>(event: Event<T>) -> Result<(), Error>
+where
+    T: std::fmt::Debug + serde::Serialize,
+{
+    let event_vec = serde_json::to_vec(&event)?;
+
+    relay().transport(event.base, event_vec);
+
+    Ok(())
+}
+
+/// Trait for event transportation
+pub trait Relay {
+    /// Accepts event, serialized in JSON, in a form of bytes.
+    ///
+    /// Use these bytes to send the event over the wire using protocols, such as:
+    /// - HTTP
+    /// - TCP
+    /// - UDP
+    fn transport(&self, event_base: EventBase, event: Vec<u8>);
+}
+
+struct NopRelay;
+
+impl Relay for NopRelay {
+    fn transport(&self, _: EventBase, _: Vec<u8>) {}
+}
