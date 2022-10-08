@@ -41,11 +41,26 @@
 
 mod error;
 mod event;
-pub mod relay;
+
+mod http;
+mod noop;
+mod udp;
+
+pub use self::http::*;
+pub use self::noop::*;
+pub use self::udp::*;
+
+/// Trait for event transportation
+pub trait Relay {
+    /// Accepts serialized event as bytes that should be sent to a certain protocol, such as:
+    /// - HTTP
+    /// - TCP
+    /// - UDP
+    fn transport(&self, event_base: EventBase, event: Vec<u8>);
+}
 
 pub use self::error::*;
 pub use self::event::*;
-pub use self::relay::*;
 
 use std::{
     hint::spin_loop,
