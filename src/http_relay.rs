@@ -33,7 +33,7 @@ impl Relay for HttpRelay {
             request = request.header("X-Debug-Pin", debug_pin);
         }
 
-        let _ = tokio::spawn(async move {
+        let result = tokio::spawn(async move {
             let response = match request.send().await {
                 Ok(response) => response,
                 Err(error) => {
@@ -58,5 +58,7 @@ impl Relay for HttpRelay {
                 }
             }
         });
+
+        drop(result);
     }
 }

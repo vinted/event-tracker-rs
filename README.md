@@ -53,3 +53,25 @@ fn track_search_event() {
     track(event, portal, debug_pin, search_event);
 }
 ```
+
+## Try locally
+
+To run UDP example:
+
+1. Listen for events:
+
+```shell
+nc -kul 5005
+```
+
+2. In separate session, run example:
+
+```shell
+cargo run --package vinted_event_tracker --example udp
+```
+
+3. See captured events, like:
+
+```json
+{"event":"event","portal":"portal","time":1708000488315,"debug_pin":1234,"iteration":945}
+```
