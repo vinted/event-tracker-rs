@@ -50,7 +50,9 @@ impl Relay for UdpRelay {
     fn transport(&self, _: Metadata, serialized_event: Vec<u8>) {
         let udp_socket = self.udp_socket.clone();
 
-        let _ = tokio::spawn(async move { udp_socket.send(&serialized_event).await });
+        let result = tokio::spawn(async move { udp_socket.send(&serialized_event).await });
+
+        drop(result);
     }
 }
 
