@@ -4,7 +4,7 @@ The Tracking Events Pipeline has been refined and improved.
 
 As part of this update, the **UDP/REST/JSON endpoint has been deprecated** and is no longer the recommended integration method for producing tracking events. Please migrate to the **gRPC endpoint**, which provides better performance, stronger contracts, and improved reliability.
 
-To simplify the migration, a new Go library has been created that provides native support for producing tracking events via gRPC:
+To simplify the migration, a new Rust library has been created that provides native support for producing tracking events via gRPC:
 
 https://github.com/vinted/rs-tracking-events-producer
 
